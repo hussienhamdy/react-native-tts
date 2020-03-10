@@ -173,7 +173,7 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
         PackageManager pm = getReactApplicationContext().getPackageManager();
         try {
             PackageInfo pi = pm.getPackageInfo(packageName, 0);
-            return true;
+            return pi.applicationInfo.enabled; // to determine if it is installed and enabled also not only installed
         } catch (NameNotFoundException e) {
             return false;
         }
@@ -182,6 +182,25 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "TextToSpeech";
+    }
+
+    @ReactMethod
+    public void isGoogleTtsEngineEnabled(Promise promise) {
+        PackageManager pm = getReactApplicationContext().getPackageManager();
+        try {
+            PackageInfo pi = pm.getPackageInfo("com.google.android.tts", 0);
+            promise.resolve(pi.applicationInfo.enabled); // to determine if google engine is enabled
+        } catch (NameNotFoundException e) {
+                promise.resolve(false);
+        }
+    }
+
+    @ReactMethod
+    public void isGoogleTtsEngineDefault(Promise promise) {
+      if (Build.VERSION.SDK_INT >= 14) {
+          String defaultEngineName = tts.getDefaultEngine();
+          promise.resolve( (defaultEngineName!=null && defaultEngineName.equals("com.google.android.tts")));
+        }
     }
 
     @ReactMethod
@@ -306,8 +325,8 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
         WritableArray voiceArray = Arguments.createArray();
 
         if (Build.VERSION.SDK_INT >= 21) {
-            try {
-                for(Voice voice: tts.getVoices()) {
+              for(Voice voice: tts.getVoices()) {
+                  try {
                     WritableMap voiceMap = Arguments.createMap();
                     voiceMap.putString("id", voice.getName());
                     voiceMap.putString("name", voice.getName());
@@ -317,18 +336,18 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                     if(country != "") {
                         language += "-" + iso3CountryCodeToIso2CountryCode(country);
                     }
-
                     voiceMap.putString("language", language);
                     voiceMap.putInt("quality", voice.getQuality());
                     voiceMap.putInt("latency", voice.getLatency());
                     voiceMap.putBoolean("networkConnectionRequired", voice.isNetworkConnectionRequired());
                     voiceMap.putBoolean("notInstalled", voice.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED));
                     voiceArray.pushMap(voiceMap);
-                }
-            } catch (Exception e) {
-              // Purposefully ignore exceptions here due to some buggy TTS engines.
-              // See http://stackoverflow.com/questions/26730082/illegalargumentexception-invalid-int-os-with-samsung-tts
-            }
+                  } catch (Exception e) {
+                    // Purposefully ignore exceptions here due to some buggy TTS engines.
+                    // See http://stackoverflow.com/questions/26730082/illegalargumentexception-invalid-int-os-with-samsung-tts
+                  }
+              }
+
         }
 
         promise.resolve(voiceArray);

@@ -112,12 +112,27 @@ class Tts extends NativeEventEmitter {
   }
 
   addEventListener(type, handler) {
-    return this.addListener(type, handler);
+    this.addListener(type, handler);
   }
 
   removeEventListener(type, handler) {
     this.removeListener(type, handler);
   }
+
+  isGoogleTtsEngineEnabled() {
+    if (Platform.OS === 'android') {
+      return TextToSpeech.isGoogleTtsEngineEnabled();
+    }
+  }
+
+  isGoogleTtsEngineDefault() {
+    if (Platform.OS === 'android') {
+      return TextToSpeech.isGoogleTtsEngineDefault();
+    }
+  }
+
+
 }
 
 export default new Tts();
+
