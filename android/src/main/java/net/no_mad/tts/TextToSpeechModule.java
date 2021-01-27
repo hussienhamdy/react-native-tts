@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class TextToSpeechModule extends ReactContextBaseJavaModule {
 
@@ -325,8 +326,13 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
         WritableArray voiceArray = Arguments.createArray();
 
         if (Build.VERSION.SDK_INT >= 21) {
-              for(Voice voice: tts.getVoices()) {
-                  try {
+            Set<Voice> voicesSet = tts.getVoices();
+            if (voicesSet == null) {
+                promise.resolve(voiceArray); // empty array
+                return;
+            }
+            for(Voice voice: voicesSet) {
+                try {
                     WritableMap voiceMap = Arguments.createMap();
                     voiceMap.putString("id", voice.getName());
                     voiceMap.putString("name", voice.getName());
@@ -342,11 +348,11 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                     voiceMap.putBoolean("networkConnectionRequired", voice.isNetworkConnectionRequired());
                     voiceMap.putBoolean("notInstalled", voice.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED));
                     voiceArray.pushMap(voiceMap);
-                  } catch (Exception e) {
+                } catch (Exception e) {
                     // Purposefully ignore exceptions here due to some buggy TTS engines.
                     // See http://stackoverflow.com/questions/26730082/illegalargumentexception-invalid-int-os-with-samsung-tts
-                  }
-              }
+                }
+            }
 
         }
 
